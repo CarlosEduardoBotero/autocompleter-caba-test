@@ -17,7 +17,7 @@ git clone https://github.com/CarlosEduardoBotero/autocompleter-GCBA-test.git
 2. Ir a la carpeta
 
 ```
-cd autocompleter-GCBA-test
+cd autocompleter-caba-test
 ```
 
 3. Instalar dependencias
