@@ -11,7 +11,7 @@
 1. Clonar repo
 
 ```
-git clone https://github.com/CarlosEduardoBotero/autocompleter-GCBA-test.git
+git clone https://github.com/CarlosEduardoBotero/autocompleter-caba-test.git
 ```
 
 2. Ir a la carpeta
