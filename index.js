@@ -9,8 +9,6 @@ const GEOSERVER_MAP_BASE_PROD_WMS_URL =
 const GEOSERVER_SEGURIDAD_WMS_URL =
   "https://geoserver.buenosaires.gob.ar/geoserver/seguridad/wms";
 
-const direccionInput = document.getElementById("dirrecionInput");
-const buscarBtn = document.getElementById("buscarBtn");
 const errorDiv = document.getElementById("errorDiv");
 
 const customIcon = new L.icon({
@@ -112,50 +110,6 @@ const autoCompleteJS = new autoComplete({
   },
 });
 
-buscarBtn.addEventListener("click", function () {
-  const inputValue = direccionInput.value;
-
-  autocompleter.suggesters.AddressSuggester.search(inputValue)
-    .then((resultados) => {
-      if (resultados.status_code !== 200) {
-        console.log(resultados.status_code);
-        return Promise.reject(resultados.error);
-      }
-      console.log("Resultados2: ", resultados);
-      if (marker == null) {
-        marker = L.marker(
-          {
-            lat: resultados.data.coordenada_y,
-            lng: resultados.data.coordenada_x,
-          },
-          { icon: customIcon }
-        ).addTo(map);
-        map.flyTo(
-          {
-            lat: resultados.data.coordenada_y,
-            lng: resultados.data.coordenada_x,
-          },
-          15
-        );
-      } else {
-        marker.setLatLng({
-          lat: resultados.data.coordenada_y,
-          lng: resultados.data.coordenada_x,
-        });
-        map.flyTo(
-          {
-            lat: resultados.data.coordenada_y,
-            lng: resultados.data.coordenada_x,
-          },
-          15
-        );
-      }
-    })
-    .catch((error) => {
-      console.log(error);
-      errorDiv.innerHTML = `Error: ${error}`;
-    });
-});
 // });
 
 // Agregar la capa de GeoServer (WFS)
