@@ -1,8 +1,7 @@
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
 import { Autocompleter } from "autocompleter-caba/dist/src/services/Autocompleter";
-
-var map = L.map("map").setView([-34.6195, -58.3816], 12);
+import autoComplete from "@tarekraafat/autocomplete.js";
 
 const CUSTOM_ICON_URL = "https://cdn-icons-png.flaticon.com/512/447/447031.png";
 const GEOSERVER_MAP_BASE_PROD_WMS_URL =
@@ -10,28 +9,121 @@ const GEOSERVER_MAP_BASE_PROD_WMS_URL =
 const GEOSERVER_SEGURIDAD_WMS_URL =
   "https://geoserver.buenosaires.gob.ar/geoserver/seguridad/wms";
 
+const direccionInput = document.getElementById("dirrecionInput");
+const buscarBtn = document.getElementById("buscarBtn");
+const errorDiv = document.getElementById("errorDiv");
+
 const customIcon = new L.icon({
   iconUrl: CUSTOM_ICON_URL,
   iconSize: [30, 30],
 });
 
-document.addEventListener("DOMContentLoaded", function () {
-  const direccionInput = document.getElementById("dirrecionInput");
-  const buscarBtn = document.getElementById("buscarBtn");
-  const errorDiv = document.getElementById("errorDiv");
-  const autocompleter = new Autocompleter();
+var map = L.map("map").setView([-34.6195, -58.3816], 12);
+let marker = null;
 
-  buscarBtn.addEventListener("click", function () {
-    const inputValue = direccionInput.value;
+const autocompleter = new Autocompleter();
 
-    autocompleter.suggesters.AddressSuggester.search(inputValue)
-      .then((resultados) => {
-        if (resultados.status_code !== 200) {
-          console.log(resultados.status_code);
-          return Promise.reject(resultados.error);
-        }
-        console.log("Resultados2: ", resultados);
-        L.marker(
+const autoCompleteJS = new autoComplete({
+  selector: "#autoComplete",
+  placeHolder: "Buscar una dirección",
+  debounce: 500,
+  threshold: 3,
+  submit: true,
+  data: {
+    src: async (query) => {
+      try {
+        // Fetch Data from external Source
+        const res = await autocompleter.getSuggestions(query);
+        return res[0].suggestions;
+      } catch (error) {
+        console.log({ error });
+      }
+    },
+    keys: ["direccion"],
+  },
+  resultsList: {
+    element: (list, data) => {
+      console.log({ list, data });
+      if (!data.results.length) {
+        // Create "No Results" message element
+        const message = document.createElement("div");
+        // Add class to the created element
+        message.setAttribute("class", "no_result");
+        // Add message text content
+        message.innerHTML = `<span>Found No Results for "${data.query}"</span>`;
+        // Append message element to the results list
+        list.prepend(message);
+      }
+    },
+    noResults: true,
+  },
+  resultItem: {
+    highlight: true,
+  },
+  events: {
+    input: {
+      selection: (event) => {
+        console.log(event);
+        const direccion = event.detail.selection.value.direccion;
+        autoCompleteJS.input.value = direccion;
+
+        autocompleter.suggesters.AddressSuggester.search(direccion)
+          .then((resultados) => {
+            if (resultados.status_code !== 200) {
+              console.log(resultados.status_code);
+              return Promise.reject(resultados.error);
+            }
+            console.log("Resultados2: ", resultados);
+            if (marker == null) {
+              marker = L.marker(
+                {
+                  lat: resultados.data.coordenada_y,
+                  lng: resultados.data.coordenada_x,
+                },
+                { icon: customIcon }
+              ).addTo(map);
+              map.flyTo(
+                {
+                  lat: resultados.data.coordenada_y,
+                  lng: resultados.data.coordenada_x,
+                },
+                15
+              );
+            } else {
+              marker.setLatLng({
+                lat: resultados.data.coordenada_y,
+                lng: resultados.data.coordenada_x,
+              });
+              map.flyTo(
+                {
+                  lat: resultados.data.coordenada_y,
+                  lng: resultados.data.coordenada_x,
+                },
+                15
+              );
+            }
+          })
+          .catch((error) => {
+            console.log(error);
+            errorDiv.innerHTML = `Error: ${error}`;
+          });
+      },
+    },
+  },
+});
+
+buscarBtn.addEventListener("click", function () {
+  const inputValue = direccionInput.value;
+
+  autocompleter.suggesters.AddressSuggester.search(inputValue)
+    .then((resultados) => {
+      if (resultados.status_code !== 200) {
+        console.log(resultados.status_code);
+        return Promise.reject(resultados.error);
+      }
+      console.log("Resultados2: ", resultados);
+      if (marker == null) {
+        marker = L.marker(
           {
             lat: resultados.data.coordenada_y,
             lng: resultados.data.coordenada_x,
@@ -45,13 +137,26 @@ document.addEventListener("DOMContentLoaded", function () {
           },
           15
         );
-      })
-      .catch((error) => {
-        console.log(error);
-        errorDiv.innerHTML = `Error: ${error}`;
-      });
-  });
+      } else {
+        marker.setLatLng({
+          lat: resultados.data.coordenada_y,
+          lng: resultados.data.coordenada_x,
+        });
+        map.flyTo(
+          {
+            lat: resultados.data.coordenada_y,
+            lng: resultados.data.coordenada_x,
+          },
+          15
+        );
+      }
+    })
+    .catch((error) => {
+      console.log(error);
+      errorDiv.innerHTML = `Error: ${error}`;
+    });
 });
+// });
 
 // Agregar la capa de GeoServer (WFS)
 var geoServerLayer = L.tileLayer
