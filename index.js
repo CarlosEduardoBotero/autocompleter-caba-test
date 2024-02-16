@@ -1,23 +1,27 @@
-import "leaflet/dist/leaflet.css";
-import L from "leaflet";
+import "mapa-gcba/dist/assets/css/main.css";
+import MapaInteractivo from "mapa-gcba/dist/models/MapaInteractivo";
 import { Autocompleter } from "autocompleter-caba/dist/src/services/Autocompleter";
 import autoComplete from "@tarekraafat/autocomplete.js";
 
-const CUSTOM_ICON_URL = "https://cdn-icons-png.flaticon.com/512/447/447031.png";
-const GEOSERVER_MAP_BASE_PROD_WMS_URL =
-  "https://geoserver.buenosaires.gob.ar/geoserver/mapa_base_prod/wms";
-const GEOSERVER_SEGURIDAD_WMS_URL =
-  "https://geoserver.buenosaires.gob.ar/geoserver/seguridad/wms";
+const map = new MapaInteractivo("mapa");
+const switchPlaces = document.querySelector("#switchPlaces");
 
-const errorDiv = document.getElementById("errorDiv");
+async function handleClick(e) {
+  const { lat, lng } = e.latlng;
+  if (!switchPlaces.checked) map.map.flyTo({ lat, lng }, 16);
+  map.reverseGeocoding(e);
+}
 
-const customIcon = new L.icon({
-  iconUrl: CUSTOM_ICON_URL,
-  iconSize: [30, 30],
-});
+function handleChangeSwitchPlaces(e) {
+  if (e.target.checked) {
+    map.setReverseOptions({ active: true, type: "places", radius: 1000 });
+  } else {
+    map.setReverseOptions({ active: true, type: "address", radius: 0 });
+  }
+}
 
-var map = L.map("map").setView([-34.6195, -58.3816], 12);
-let marker = null;
+map.map.addEventListener("click", (e) => handleClick(e));
+switchPlaces.addEventListener("change", handleChangeSwitchPlaces);
 
 const autocompleter = new Autocompleter();
 
@@ -40,6 +44,7 @@ const autoCompleteJS = new autoComplete({
     keys: ["direccion"],
   },
   resultsList: {
+    maxResults: undefined,
     element: (list, data) => {
       console.log({ list, data });
       if (!data.results.length) {
@@ -61,100 +66,23 @@ const autoCompleteJS = new autoComplete({
   events: {
     input: {
       selection: (event) => {
-        console.log(event);
         const direccion = event.detail.selection.value.direccion;
         autoCompleteJS.input.value = direccion;
-
         autocompleter.suggesters.AddressSuggester.search(direccion)
           .then((resultados) => {
             if (resultados.status_code !== 200) {
               console.log(resultados.status_code);
               return Promise.reject(resultados.error);
             }
-            console.log("Resultados2: ", resultados);
-            if (marker == null) {
-              marker = L.marker(
-                {
-                  lat: resultados.data.coordenada_y,
-                  lng: resultados.data.coordenada_x,
-                },
-                { icon: customIcon }
-              ).addTo(map);
-              map.flyTo(
-                {
-                  lat: resultados.data.coordenada_y,
-                  lng: resultados.data.coordenada_x,
-                },
-                15
-              );
-            } else {
-              marker.setLatLng({
-                lat: resultados.data.coordenada_y,
-                lng: resultados.data.coordenada_x,
-              });
-              map.flyTo(
-                {
-                  lat: resultados.data.coordenada_y,
-                  lng: resultados.data.coordenada_x,
-                },
-                15
-              );
-            }
+            map.setMarkerView(
+              resultados.data.coordenada_y,
+              resultados.data.coordenada_x
+            );
           })
           .catch((error) => {
             console.log(error);
-            errorDiv.innerHTML = `Error: ${error}`;
           });
       },
     },
   },
 });
-
-// });
-
-// Agregar la capa de GeoServer (WFS)
-var geoServerLayer = L.tileLayer
-  .wms(GEOSERVER_MAP_BASE_PROD_WMS_URL, {
-    layers: "mapa_base",
-    format: "image/png",
-    transparent: true,
-    attribution: "Generado por el Gobierno de la Ciudad de Buenos Aires",
-  })
-  .addTo(map);
-
-// Agregar la nueva capa desde GeoServer (WFS) y ocultarla inicialmente
-var newLayer = L.tileLayer
-  .wms(GEOSERVER_SEGURIDAD_WMS_URL, {
-    layers: "policia",
-    format: "image/png",
-    transparent: true,
-    attribution: "Generado por el Gobierno de la Ciudad de Buenos Aires",
-    visible: false,
-  })
-  .addTo(map);
-
-// Asociar un evento 'mousemove' al mapa para actualizar las coordenadas
-map.on("mousemove", function (e) {
-  var latLng = e.latlng;
-  document.getElementById("coordinates").innerText =
-    "Coordenadas: " + latLng.lat + ", " + latLng.lng;
-});
-
-// Asociar un evento de clic al botón para cambiar la visibilidad de la nueva capa
-document
-  .getElementById("toggleLayerButton")
-  .addEventListener("click", function () {
-    newLayer.setParams({
-      layers: newLayer.options.layers,
-      transparent: !newLayer.options.transparent,
-    });
-    newLayer.options.transparent = !newLayer.options.transparent;
-
-    if (newLayer.options.transparent) {
-      // Capa visible
-      map.addLayer(newLayer);
-    } else {
-      // Capa oculta
-      map.removeLayer(newLayer);
-    }
-  });

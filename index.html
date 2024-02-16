@@ -3,44 +3,8 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Mapabase GeoServer</title>
+    <title>Autocompleter-CABA</title>
     <style>
-      /* Estilo para centrar el título en la página */
-      #title {
-        text-align: center;
-      }
-      /* Estilo para el botón centrado en la página */
-      #toggleLayerButton {
-        display: block;
-        margin: 0 auto;
-        z-index: 999;
-      }
-      /* Estilo para la información de coordenadas */
-      #coordinates {
-        position: absolute;
-        bottom: 20px;
-        left: 18%; /* Centrado horizontalmente */
-        transform: translateX(-10%); /* Ajuste para centrado horizontal */
-        background-color: white;
-        padding: 5px;
-        border: 5px solid rgb(255, 252, 104);
-        border-radius: 5px;
-        z-index: 1000; /* Asegura que esté por encima del mapa */
-      }
-      /* Estilo para el contenedor del mapa */
-      #map {
-        border: 10px solid rgb(255, 252, 104);
-        position: relative; /* Importante para el posicionamiento relativo */
-      }
-      /* Estilo para el contenedor del mapa */
-      #map-container {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        height: 600px;
-        position: relative;
-      }
-
       #errorDiv {
         color: red;
       }
@@ -176,25 +140,97 @@
           width: 18rem;
         }
       }
+
+      .switchContainer {
+        position: absolute;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        top: 0;
+        right: 0;
+        z-index: 1000;
+        background: white;
+        padding: 5px;
+        border-radius: 20px;
+      }
+
+      .switch {
+        position: relative;
+        display: inline-block;
+        width: 60px;
+        height: 34px;
+      }
+
+      /* Hide default HTML checkbox */
+      .switch input {
+        opacity: 0;
+        width: 0;
+        height: 0;
+      }
+
+      /* The slider */
+      .slider {
+        position: absolute;
+        cursor: pointer;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: #ccc;
+        -webkit-transition: 0.4s;
+        transition: 0.4s;
+      }
+
+      .slider:before {
+        position: absolute;
+        content: "";
+        height: 26px;
+        width: 26px;
+        left: 4px;
+        bottom: 4px;
+        background-color: white;
+        -webkit-transition: 0.4s;
+        transition: 0.4s;
+      }
+
+      input:checked + .slider {
+        background-color: #2196f3;
+      }
+
+      input:focus + .slider {
+        box-shadow: 0 0 1px #2196f3;
+      }
+
+      input:checked + .slider:before {
+        -webkit-transform: translateX(26px);
+        -ms-transform: translateX(26px);
+        transform: translateX(26px);
+      }
+
+      /* Rounded sliders */
+      .slider.round {
+        border-radius: 34px;
+      }
+
+      .slider.round:before {
+        border-radius: 50%;
+      }
     </style>
   </head>
   <body>
-    <!-- Encabezado con el título -->
-    <header id="title">
-      <h1>Mapa base desde GeoServer con capa</h1>
-    </header>
-    <!-- Botón para activar/desactivar la nueva capa -->
-    <button id="toggleLayerButton">Mostrar/Esconder Capa</button>
-
-    <div id="errorDiv"></div>
-    <!-- Contenedor centrado para el mapa con borde negro sólido de 10px -->
-    <div id="map-container">
+    <div>
       <input id="autoComplete" />
-      <div id="map" style="width: 1000px; height: 570px"></div>
-      <!-- Contenedor para mostrar las coordenadas dentro del mapa -->
-      <div id="coordinates"></div>
+      <div class="switchContainer">
+        Activar places:
+        <label class="switch">
+          <input type="checkbox" id="switchPlaces" />
+          <span class="slider round"></span>
+        </label>
+      </div>
+      <div id="mapa">
+        <div id="map"></div>
+      </div>
     </div>
-
     <script src="./index.js"></script>
   </body>
 </html>
