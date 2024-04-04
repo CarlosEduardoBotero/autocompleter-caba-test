@@ -36,12 +36,12 @@ const autoCompleteJS = new autoComplete({
       try {
         // Fetch Data from external Source
         const res = await autocompleter.getSuggestions(query);
-        return res[0].suggestions;
+        return res.filter((data) => !data.error);
       } catch (error) {
         console.log({ error });
       }
     },
-    keys: ["direccion"],
+    keys: ["value"],
   },
   resultsList: {
     maxResults: undefined,
@@ -66,9 +66,10 @@ const autoCompleteJS = new autoComplete({
   events: {
     input: {
       selection: (event) => {
-        const direccion = event.detail.selection.value.direccion;
+        const direccion = event.detail.selection.value.value;
         autoCompleteJS.input.value = direccion;
-        autocompleter.suggesters.AddressSuggester.search(direccion)
+        autocompleter
+          .getSearch(direccion)
           .then((resultados) => {
             if (resultados.status_code !== 200) {
               console.log(resultados.status_code);
