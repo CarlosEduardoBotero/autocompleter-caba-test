@@ -31,6 +31,7 @@ const autoCompleteJS = new autoComplete({
   debounce: 500,
   threshold: 3,
   submit: true,
+  searchEngine: (_, record) => record,
   data: {
     src: async (query) => {
       try {
