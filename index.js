@@ -76,6 +76,17 @@ const autoCompleteJS = new autoComplete({
               console.log(resultados.status_code);
               return Promise.reject(resultados.error);
             }
+
+            if (
+              resultados.data?.coordenadas?.x &&
+              resultados.data?.coordenadas?.y
+            ) {
+              map.setMarkerView(
+                resultados.data.coordenadas.y,
+                resultados.data.coordenadas.x
+              );
+              return;
+            }
             map.setMarkerView(
               resultados.data.coordenada_y,
               resultados.data.coordenada_x
