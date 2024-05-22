@@ -13,7 +13,7 @@
   "license": "ISC",
   "dependencies": {
     "@tarekraafat/autocomplete.js": "^10.2.7",
-    "autocompleter-caba": "^0.1.2",
+    "autocompleter-caba": "^0.1.3",
     "leaflet": "^1.9.4",
     "mapa-gcba": "^1.0.0"
   },
